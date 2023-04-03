@@ -3,6 +3,10 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven { 
+            url "http://download.flutter.io" 
+            allowInsecureProtocol = true
+        }
     }
 
     dependencies {
@@ -15,6 +19,10 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { 
+            url "http://download.flutter.io" 
+            allowInsecureProtocol = true
+        }
     }
 }
 
