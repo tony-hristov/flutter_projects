@@ -26,8 +26,6 @@ class CreditScoreEntity extends Equatable {
     required this.providerUrl,
   });
 
-  CreditRatingType
-
   @override
   List<Object?> get props => [score, rating, asOfDate, scoreChange, providerUrl];
 
