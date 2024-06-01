@@ -1,0 +1,13 @@
+name: full_stack_todo_dart
+
+packages:
+  - packages/**
+
+scripts:
+  analyze:
+    exec: dart analyze .
+  backend:dev:
+    run: melos exec -c 1 --fail-fast -- "dart_frog dev"
+    description: Starts the dev server for the backend
+    select-package:
+      flutter: false
