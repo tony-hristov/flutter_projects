@@ -12,6 +12,7 @@ Widget _widgetUnderTest({required double score}) => createMaterialApp(SizedBox(
         maxScore: 100,
         score: score,
         size: 200,
+        imageSize: 100,
       ),
     ])));
 

@@ -4,22 +4,11 @@ import 'package:flutter_ui_components/src/components/score_line/score_line.dart'
 
 import '../../shared/create_material_app.dart';
 
-final List<ScoreData> _kRatingsList = List.unmodifiable([
-  const ScoreData(color: Color(0xFFAA0000), semanticLabel: 'Very Poor'),
-  const ScoreData(color: Color(0xFFE38D1C), semanticLabel: 'Poor'),
-  const ScoreData(color: Color(0xFFFFC229), semanticLabel: 'Fair'),
-  const ScoreData(color: Color(0xFF008800), semanticLabel: 'Good'),
-  const ScoreData(color: Color(0xFF005216), semanticLabel: 'Excellent'),
-]);
-
 Widget _widgetUnderTest({required int ratingIndex}) => createMaterialApp(SizedBox(
     height: 100,
     width: 300,
     child: Row(children: [
-      ScoreLine(
-        ratingsList: _kRatingsList,
-        ratingIndex: ratingIndex,
-      ),
+      ScoreLine.creditScore(ratingIndex: ratingIndex),
     ])));
 
 void main() {

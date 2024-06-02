@@ -5,26 +5,13 @@ import 'package:flutter_ui_components/src/components/score_line/score_line.dart'
 import '../../shared/create_material_app.dart';
 import '../../shared/set_screen_size.dart';
 
-final List<ScoreData> _kRatingsList = List.unmodifiable([
-  const ScoreData(color: Color(0xFFAA0000), semanticLabel: 'Very Poor'),
-  const ScoreData(color: Color(0xFFE38D1C), semanticLabel: 'Poor'),
-  const ScoreData(color: Color(0xFFFFC229), semanticLabel: 'Fair'),
-  const ScoreData(color: Color(0xFF008800), semanticLabel: 'Good'),
-  const ScoreData(color: Color(0xFF005216), semanticLabel: 'Excellent'),
-]);
-
 const _kHeight = 50.0;
 const _kWidth = 300.0;
 const _kWrapperKey = Key('score_line_wrapper');
 
 Widget _widgetUnderTest({required int ratingIndex}) => createMaterialApp(Row(
       key: _kWrapperKey,
-      children: [
-        ScoreLine(
-          ratingsList: _kRatingsList,
-          ratingIndex: ratingIndex,
-        ),
-      ],
+      children: [ScoreLine.creditScore(ratingIndex: ratingIndex)],
     ));
 
 void main() {
