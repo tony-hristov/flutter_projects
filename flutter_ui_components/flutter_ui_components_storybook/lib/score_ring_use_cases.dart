@@ -26,7 +26,7 @@ const _kStrockeFillColor = Color(0xFFD0D5DD);
 
 const List<double> _kScoreValues = [30, 60, 90];
 
-@widgetbook.UseCase(name: 'ScoreRing: Multiple variants', type: ScoreRing)
+@widgetbook.UseCase(name: 'ScoreRing: Multiple Variants', type: ScoreRing)
 Widget scoreRing_default(BuildContext context) {
   return SingleChildScrollView(
     child: Center(

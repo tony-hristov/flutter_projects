@@ -86,12 +86,17 @@ final directories = <_i1.WidgetbookNode>[
       _i1.WidgetbookFolder(
         name: 'score_ring',
         children: [
-          _i1.WidgetbookLeafComponent(
-            name: 'ScoreRing',
-            useCase: _i1.WidgetbookUseCase(
-              name: 'ScoreRing: Default',
-              builder: _i4.scoreRing_default,
-            ),
+          _i1.WidgetbookFolder(
+            name: 'src',
+            children: [
+              _i1.WidgetbookLeafComponent(
+                name: 'ScoreRing',
+                useCase: _i1.WidgetbookUseCase(
+                  name: 'ScoreRing: Multiple Variants',
+                  builder: _i4.scoreRing_default,
+                ),
+              )
+            ],
           )
         ],
       ),
