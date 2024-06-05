@@ -1,9 +1,9 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'ring_direction_type.dart';
 import 'ring_painter.dart';
+import 'ring_painter_helpers.dart';
 
 const _kDefaultRingColor = Color(0xFF008800);
 const _kDefaultStrokeWidth = 10.0;
@@ -63,7 +63,7 @@ class ScoreRing extends StatelessWidget {
       key: const Key('score_ring'),
       painter: RingPainter(
         radius: size / 2,
-        sweepAngleInRadians: score / maxScore * (2 * math.pi),
+        sweepAngleInRadians: sweepAngleInRadians(score, maxScore),
         strokeWidth: strokeWidth,
         strokeColor: strokeColor,
         strokeFullCircleColor: strokeFullCircleColor,

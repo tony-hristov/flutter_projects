@@ -5,9 +5,9 @@ import 'package:flutter_ui_components/flutter_ui_components.dart';
 import 'package:widgetbook_annotation/widgetbook_annotation.dart' as widgetbook;
 
 const _kMaxScore = 100.0;
-const _kScoreRingWidgetSize = 80.0;
-const _kStrokeWith = 5.0;
-const _kImageSize = 33.0;
+const _kScoreRingWidgetSize = 50.0;
+const _kStrokeWith = 3.5;
+const _kImageSize = 25.0;
 
 const _kScoreRingWidgetSizeLarge = 230.0;
 const _kStrokeWithLarge = 10.0;
@@ -24,7 +24,7 @@ const _kStrokeColorEquity = Color(0xFF16B364);
 const _kStrokeColorOffer = Color(0xFFEF6820);
 const _kStrockeFillColor = Color(0xFFD0D5DD);
 
-const List<double> _kScoreValues = [30, 60, 90];
+const List<double> _kScoreValues = [30, 75, 90];
 
 @widgetbook.UseCase(name: 'ScoreRing: Multiple Variants', type: ScoreRing)
 Widget scoreRing_default(BuildContext context) {
@@ -64,12 +64,12 @@ class _ScoreRingDemoState extends State<ScoreRingDemo> {
               children: [
                 ScoreRing(
                   maxScore: _kMaxScore,
-                  score: 75,
+                  score: 35,
                   size: _kScoreRingWidgetSizeLarge,
                   imageSize: _kImageSizeLarge,
                   strokeWidth: _kStrokeWithLarge,
                   strokeColor: _kStrokeColorHome,
-                  // strokeFullCircleColor: _kStrockeFillColor,
+                  strokeFullCircleColor: _kStrockeFillColor,
                   iconSgvAssetName: _kIconSgvAssetNameHome,
                   ringDirectionType: RingDirectionType.clockwise,
                 ),
@@ -88,7 +88,7 @@ class _ScoreRingDemoState extends State<ScoreRingDemo> {
                   imageSize: _kImageSize,
                   strokeWidth: _kStrokeWith,
                   strokeColor: _kStrokeColorHome,
-                  // strokeFullCircleColor: _kStrockeFillColor,
+                  strokeFullCircleColor: _kStrockeFillColor,
                   iconSgvAssetName: _kIconSgvAssetNameHome,
                   ringDirectionType: RingDirectionType.clockwise,
                 ),
@@ -211,7 +211,7 @@ class _ScoreRingDemoState extends State<ScoreRingDemo> {
               children: [
                 ScoreRing(
                   maxScore: _kMaxScore,
-                  score: 80,
+                  score: 19,
                   size: _kScoreRingWidgetSizeLarge,
                   imageSize: _kImageSizeLarge,
                   strokeWidth: _kStrokeWithLarge,

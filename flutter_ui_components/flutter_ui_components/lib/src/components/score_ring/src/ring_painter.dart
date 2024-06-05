@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import 'ring_direction_type.dart';
-
-/// Points to the top of the drawing circle from where to start painting the arc
-const _kStartAngleInRadians = 0 - math.pi / 2;
+import 'ring_painter_helpers.dart';
 
 class RingPainter extends CustomPainter {
   /// Radius of the circle
@@ -25,7 +23,7 @@ class RingPainter extends CustomPainter {
   /// An optional color for the background full circle
   final Color? strokeFullCircleColor;
 
-  /// Direction to paint the ring
+  /// Direction to paint the ring, default to [RingDirectionType.clockwise]
   final RingDirectionType ringDirectionType;
 
   RingPainter({
@@ -54,31 +52,33 @@ class RingPainter extends CustomPainter {
     canvas.drawArc(
       Rect.fromLTRB(0 + strokeWidth, 0 + strokeWidth, size.width - strokeWidth, size.height - strokeWidth),
       (ringDirectionType == RingDirectionType.clockwise)
-          ? _kStartAngleInRadians
-          : _kStartAngleInRadians - sweepAngleInRadians,
+          ? kStartAngleInRadians
+          : kStartAngleInRadians - sweepAngleInRadians,
       sweepAngleInRadians,
       false,
       paint,
     );
 
     // When less that full circle, make the stroke rounded
-    if (sweepAngleInRadians < 2 * math.pi) {
+    if (sweepAngleInRadians < kFullCircleInRadians) {
       paint.strokeWidth = strokeWidth / 2;
       // Make the start of the arc rounded
       canvas.drawCircle(Offset(size.width / 2 + 2, 0 + strokeWidth), strokeWidth / 4, paint);
 
-      // Find the end coordinates
-      double arcEndX = size.width / 2 + math.cos(_kStartAngleInRadians - sweepAngleInRadians) * (radius - strokeWidth);
+      // Find the coordinates of the point where the arc ends. Add some little extra angle.
+      double endPointAngleInRadians = sweepAngleInRadians + degreeToRadian(4);
+      double arcEndX = radius + math.cos(kStartAngleInRadians - endPointAngleInRadians) * (radius - strokeWidth);
       if (ringDirectionType == RingDirectionType.clockwise) {
-        arcEndX = size.width / 2 + (size.width / 2 - arcEndX);
+        arcEndX = radius * 2 + -arcEndX;
       }
-      
-      final arcEndY = size.height / 2 + math.sin(_kStartAngleInRadians - sweepAngleInRadians) * (radius - strokeWidth);
 
-      // Make the end of the arc rounded
+      final arcEndY = radius + math.sin(kStartAngleInRadians - endPointAngleInRadians) * (radius - strokeWidth);
+
+      // Draw a circle at the end
+      paint.strokeWidth = strokeWidth / 1.5;
       canvas.drawCircle(
-        Offset(arcEndX + 1, arcEndY + 1),
-        strokeWidth / 4,
+        Offset(arcEndX, arcEndY),
+        strokeWidth / 1.2,
         paint,
       );
     }
