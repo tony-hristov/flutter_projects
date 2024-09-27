@@ -1,0 +1,3983 @@
+{
+	"info": {
+		"_postman_id": "62c212ea-bc32-43c0-9f72-04d944333905",
+		"name": "Greenlight HPP OpenApi",
+		"description": "## Overview\n\nGL API endpoints to support affiliate partners in the Hybrid Platform Partnership (HPP) program.\n\n## Change Log\n\n### v1.6.4\n- Updated outdated server definition for `/oauth2/token` endpoint\n\n### v1.6.3\n- Updated `ExternalReferenceFundingSource` used in PUT `/registrations/{registrationId}` endpoint\n  - Removed duplicate `externalCustomerId` attribute\n  - Updated `accountType` attribute to be optional\n\n### v1.6.2\n- Updated `/oauth2/token` endpoint to include details on `partner` grant type\n\n### v1.6.1\n- Added `externalCustomerId` attribute to load registration request payload.\n\n### v1.6.0\n- Migrated from v3.0.2 to v3.1.0 of OpenAPI specification\n- Added event webhooks into the API specification for `Affiliation` and `Registration` resources\n- Updated some examples that did not conform to latest schema definitions\n- Added additional security options for endpoints\n- Marked `families/{familyId}/promotion-subscriptions` endpoint as internal beta (will not be implemented)\n- Added the ability to specify both `externalAccountId` and `externalCustomerId` in the `ExternalReferenceFundingSource` as part of partner registration pre-fill\n\n### v1.5.3\n- Added `ExternalReferenceFundingSource` type to support adding `externalAccountId` as a prefill attribute for registration\n\n### v1.5.2\n- Added the `GET /families/{familyId}/promotion-subscriptions` endpoint to allow partner clients to retrieve promotion details of partner promotion subscriptions for the family.\n\n### v1.5.1\n- Updated `GET /families/{familyId}` endpoint to include the option to receive child account balances and activity data by providing optional query parameters.\n\n### v1.5.0\n- Updated `Family` data type by changing `familyId` attribute to just `id` to match existing naming convention where the primary id of a data type is always described as `id`, not `${object}Id` as we do with referential ids.\n- Fixed security definition with `GET /registration` path to include requirement for scope on access token\n\n### v1.4.0\n- Updated path for registration operations from `/registration` to `/registrations` to align with REST conventions used for account operations.\n- Added `409` responses to represent the state when an API client requests information for a family or child resource that is inactive in the GL platform\n- Added documentation to explain the format of messages returned in the `getChildActivity` operation\n- Updated `AccountActivity` data type to make `message` and `transactionDate` required attributes.  This makes the data type more explicit as to what information will be guaranteed now, and what information may be added in future iterations. \n\n### v1.3.1\n- Updated example request payload for `intiateRegistration` and `loadRegistration` operations\n- Updated documentation to explicity define the OAuth client credential security requirements for endpoints\n\n### v1.3.0\n- Updated base path mapping from `/api/v1` to `/hpp/api/v1` to support path separation for upcoming testaway API\n- Updated second server option for `POST /oauth2/token` endpoint\n- Added server definition for `GET /ping` endpoint to represent a different base path\n- Removed duplication of `environment` variable for separate server definitions (helps postman import)\n- Updated `Candidate` data type to make `candidateId` required\n- Removed `id` attribute from `AccountModule` data type to reduce exposure of unused ids\n- Removed `id` attribute from `GreenlightAccount` data type to reduce exposure of unused ids\n- Updated `GreenlightAccount.balance` to a `float` to align with money representation in other data types\n\n### v1.2.0\n- Added the `/families/` path to scope endpoints protected by a family context\n- Removed the `/account/` path in favor of the `/families/` path\n- Remove the `/authentication/` path in favor of the [AWS Cognito Token Endpoint](https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html)\n  - provided the `/oauth2/token` as a corollary if GL eventually proxies the Cognito endpoint or decideds to move IDP and STS functions into an internally hosted solution \n- Updated the `Family` data type to make the parent and children lists use more specific `Parent` and `Child` references, instead of the generic `User` reference\n- Renamed `InitiateRegistrationPayload` and `LoadRegistrationPayload` to `InitiateRegistrationRequest` and `LoadRegistrationRequest` respectively, to be more specific on the purpose of the data type\n- Removed the `id` attribute of a `LedgerAccount` data type, because is not required for any other API requests\n- Added more response types to each of the endpoints to account for error cases\n\n### v1.1.0\n- Add In-App Content Integration API endpoints\n - Account-History operations: `getChildActivity`, `getChildBalance`\n - Account-Management operations: `getFamily`\n - Ping: `testConnectivity`\n- Update Registration endpoints\n - add `fundingSource` attribute to `LoadRegistrationPayload` data type to capture the ACH funding source to use as the primary funding source for a new Parent registration\n - add more response codes and examples\n\n### v1.0.0\n- initial release\n\n## Terminology\n\n### Family Id\nExternal Account Identifier.  An identifier, provided by GL to affiliate partners, to uniquely identify parents and children on the GL platform.  This value should not change during the account relationship of the user with the GL platform.\n\n### GLUID\nThe Greenlight Unique Identifier (GLUID), is a compound Id that is globally unique in the resource model exposed by the GL APIs. A GLUID is composed of a Resource Entity Type and a Resource Id. GlUIDs are constructed with the following format `{ResourceType}::{ResourceId}`.  \n\nAs an example, an External User is a GL resource entity type that relates to an External Id resource.  If an external user has an External Id of `abc123-xyz789`, this user can be represented as the GLUID `ExternalUser::abc123-xyz789`.  \n\n## Types\n\n### DateTime\nA DateTime object is represented as a String in the GL resource model.  DateTime strings should be compliant with the date-time format outlined in section 5.6 of the [RFC 3339 profile of the ISO 8601](https://tools.ietf.org/html/rfc3339) standard for representation of dates and times using the Gregorian calendar.  An example of a DateTime string representing a date and time in UTC is `2019-09-03T10:15:30Z`.\n\n### Date\nA date object is represented as a String in the GL resource model.  Date strings should be compliant with the ISO 8601 representation of dates in the `YYYY-MM-DD` format.  Dates do not contain time, and therefore are not subject to the time and timezone offset formats in the ISO 8601 specification.  If time is derived from a date, it is derived as midnight UTC.  An example of a Date string in this format is `2019-09-03`, which represents September 3, 2019.\n\n### Currency\nMoney amounts, or currency, is represented in the resource model as a Number (32.74).  The assumption is that this number represents US currency.\n\n### String\nUnless otherwise noted against the specific data type in the specification, the maximum length for all String data types is 255 characters.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19773712"
+	},
+	"item": [
+		{
+			"name": "families/{familyId}",
+			"item": [
+				{
+					"name": "children/{childId}",
+					"item": [
+						{
+							"name": "Get Child Account Activity Summary",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "scope",
+											"value": "io.gl-tech.partners/{{partnerId}}",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "https://partners.auth.gl-tech.io/oauth2/token",
+											"type": "string"
+										},
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId/children/:childId/activity",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId",
+										"children",
+										":childId",
+										"activity"
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "childId",
+											"value": "<string>",
+											"description": "(Required) GL external child id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								},
+								"description": "Return a summary of the account activity history for a Child account.  The default implementation will only return a fixed number of the latest spending transactions related to a Child.  The response will return a max of 3 activities, but could return 0 activities if the child does not have any qualifying financial activities.\n\nThe response message format varies based on the type of transaction and if the funds were sourced from more than one internal sub-account under a child's GL Account.\n\nMessage templates for transactions with sourced from a single sub-account:\n\n* hold-with-tip: `\"${{amountWithoutTip}} + {{tip}} tip pending{{{atOptionalStore}}}\"`\n* hold: `\"${{amount}} purchase pending{{{atOptionalStore}}}\"`\n* settled: `\"${{amount}} spent{{{atOptionalStore}}}\"`\n* settled-fee: `\"${{amount}} {{{atOptionalStore}}} fee\"`\n* canceled: `\"${{amount}} canceled{{{atOptionalStore}}}\"`\n* rejected: `\"${{amount}} declined{{{atOptionalStore}}}\"`\n* reversal: `\"${{amount}} refunded{{{atOptionalStore}}}\"`\n* credit: `\"${{amount}} credited{{{fromOptionalStore}}}\"`\n\nMessage templates for transactions sourced from multiple sub-accounts:\n\n* hold-with-tip: `\"${{amount}} purchase{{{atOptionalStore}}} is pending (balance + tip). It was split between Spend Anywhere (${{anywhereAmount}}) and {{{ruleName}}} (${{ruleAmount}}).\"`\n* hold: `\"${{amount}} purchase{{{atOptionalStore}}} is pending. It was split between Spend Anywhere (${{anywhereAmount}}) and {{{ruleName}}} (${{ruleAmount}}).\"`\n* settled: `\"${{amount}} purchase{{{atOptionalStore}}} was split between Spend Anywhere (${{anywhereAmount}}) and {{{ruleName}}} (${{ruleAmount}}).\"`\n* settled-fee: `\"${{amount}} card replacement fee was split between Spend Anywhere (${{anywhereAmount}}) and {{{ruleName}}} (${{ruleAmount}}).\"`\n* canceled: `\"${{amount}} canceled{{{atOptionalStore}}}\"`\n* rejected: `\"${{amount}} rejected{{{atOptionalStore}}}\"`\n* reversal: `\"${{amount}} was refunded{{{fromOptionalStore}}}. It was split between Spend Anywhere (${{anywhereAmount}}) and {{{ruleName}}} (${{ruleAmount}}).\"`\n* credit: `\"${{amount}} was credited{{{fromOptionalStore}}}. It was split between Spend Anywhere (${{anywhereAmount}}) and {{{ruleName}}} (${{ruleAmount}}).\"`"
+							},
+							"response": [
+								{
+									"name": "Successful retrieval of recent account activity",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/activity",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"activity"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{}"
+								},
+								{
+									"name": "This response code is provided if there is something wrong with the request payload.  Generally this means that a required field was not provided, or that an invalid enumeration was used when constructing the request.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/activity",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"activity"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The `Authorization` header was not provided, or the token was unable to be validated.  The affiliate partner requesting the resource cannot be authenticated by the GL platform.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/activity",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"activity"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The Access Token provided is valid, but it does not have the correct scope or context to retrieve the resources requested.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/activity",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"activity"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The requested resource was not available or not found with the given identifiers.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/activity",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"activity"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The request conflicts with the state of the data in GL. The operation is not valid for the selected resource.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/activity",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"activity"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Conflict",
+									"code": 409,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "GL was unable to process the request.  Client exceeded rate limit for the service.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/activity",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"activity"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Too Many Requests",
+									"code": 429,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/plain"
+										}
+									],
+									"cookie": [],
+									"body": ""
+								},
+								{
+									"name": "GL was unable to process the request.  The requested service encountered an unexpected system condition.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/activity",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"activity"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get Child Account Balances",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "scope",
+											"value": "io.gl-tech.partners/{{partnerId}}",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "https://partners.auth.gl-tech.io/oauth2/token",
+											"type": "string"
+										},
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId/children/:childId/balances",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId",
+										"children",
+										":childId",
+										"balances"
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "childId",
+											"value": "<string>",
+											"description": "(Required) GL external child id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								},
+								"description": "Return a summary of the account, module, and sub-account balances for a Child account.  The default implementation will return module balances for the spend, save, give, and invest modules, as well as a top level aggregate balance."
+							},
+							"response": [
+								{
+									"name": "Successful retrieval of account balances for a GL Account",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/balances",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"balances"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"balance\": \"<float>\",\n  \"child\": {\n    \"name\": {\n      \"preferredName\": \"<string>\",\n      \"preferredPronoun\": \"<string>\",\n      \"firstName\": \"<string>\",\n      \"lastName\": \"<string>\"\n    },\n    \"id\": \"<string>\",\n    \"dob\": \"<date>\",\n    \"gender\": \"<string>\"\n  },\n  \"spend\": {\n    \"type\": \"<string>\",\n    \"name\": \"<string>\",\n    \"balance\": \"<float>\",\n    \"subaccounts\": [\n      {\n        \"type\": \"<string>\",\n        \"name\": \"<string>\",\n        \"balance\": \"<float>\"\n      },\n      {\n        \"type\": \"<string>\",\n        \"name\": \"<string>\",\n        \"balance\": \"<float>\"\n      }\n    ]\n  },\n  \"save\": {\n    \"type\": \"<string>\",\n    \"name\": \"<string>\",\n    \"balance\": \"<float>\",\n    \"subaccounts\": [\n      {\n        \"type\": \"<string>\",\n        \"name\": \"<string>\",\n        \"balance\": \"<float>\"\n      },\n      {\n        \"type\": \"<string>\",\n        \"name\": \"<string>\",\n        \"balance\": \"<float>\"\n      }\n    ]\n  },\n  \"give\": {\n    \"type\": \"<string>\",\n    \"name\": \"<string>\",\n    \"balance\": \"<float>\",\n    \"subaccounts\": [\n      {\n        \"type\": \"<string>\",\n        \"name\": \"<string>\",\n        \"balance\": \"<float>\"\n      },\n      {\n        \"type\": \"<string>\",\n        \"name\": \"<string>\",\n        \"balance\": \"<float>\"\n      }\n    ]\n  },\n  \"invest\": {\n    \"type\": \"<string>\",\n    \"name\": \"<string>\",\n    \"balance\": \"<float>\",\n    \"subaccounts\": [\n      {\n        \"type\": \"<string>\",\n        \"name\": \"<string>\",\n        \"balance\": \"<float>\"\n      },\n      {\n        \"type\": \"<string>\",\n        \"name\": \"<string>\",\n        \"balance\": \"<float>\"\n      }\n    ]\n  }\n}"
+								},
+								{
+									"name": "This response code is provided if there is something wrong with the request payload.  Generally this means that a required field was not provided, or that an invalid enumeration was used when constructing the request.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/balances",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"balances"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The `Authorization` header was not provided, or the token was unable to be validated.  The affiliate partner requesting the resource cannot be authenticated by the GL platform.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/balances",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"balances"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The Access Token provided is valid, but it does not have the correct scope or context to retrieve the resources requested.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/balances",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"balances"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The requested resource was not available or not found with the given identifiers.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/balances",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"balances"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The request conflicts with the state of the data in GL. The operation is not valid for the selected resource.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/balances",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"balances"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Conflict",
+									"code": 409,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "GL was unable to process the request.  Client exceeded rate limit for the service.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/balances",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"balances"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Too Many Requests",
+									"code": 429,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/plain"
+										}
+									],
+									"cookie": [],
+									"body": ""
+								},
+								{
+									"name": "GL was unable to process the request.  The requested service encountered an unexpected system condition.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/families/:familyId/children/:childId/balances",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"families",
+												":familyId",
+												"children",
+												":childId",
+												"balances"
+											],
+											"variable": [
+												{
+													"key": "familyId",
+													"value": "<string>",
+													"description": "(Required) GL external family id"
+												},
+												{
+													"key": "childId",
+													"value": "<string>",
+													"description": "(Required) GL external child id"
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Get GL Family",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{client_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/families/{{family_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"families",
+								"{{family_id}}"
+							]
+						},
+						"description": "Get the structure of a GL family.\n\nIn addition to the core structure of the GL family, you have the option to enhance the API response with child account balances and account activity details. To include these additional details, make use of the optional query parameters when making your API request. \n\n#### Add child account balances to the API resposne\n`/families/{familyId}?fields=children.balances`\n\n#### Adds child account activity to the API resposne\n`/families/{familyId}?fields=children.recentActivity`\n\n#### Adds child account balances and activity to the API resposne\n`/families/{familyId}?fields=children.recentActivity,children.balances`"
+					},
+					"response": [
+						{
+							"name": "Successful retrieval of a GL Family",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId?fields=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId"
+									],
+									"query": [
+										{
+											"key": "fields",
+											"value": "<string>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"parents\": [\n    {\n      \"name\": {\n        \"preferredName\": \"<string>\",\n        \"preferredPronoun\": \"<string>\",\n        \"firstName\": \"<string>\",\n        \"lastName\": \"<string>\"\n      },\n      \"id\": \"<string>\",\n      \"phone\": \"<string>\",\n      \"role\": \"<string>\",\n      \"address\": {\n        \"street1\": \"<string>\",\n        \"street2\": \"<string>\",\n        \"city\": \"<string>\",\n        \"country\": \"<string>\",\n        \"county\": \"<string>\",\n        \"state\": \"<string>\",\n        \"postalCode\": \"<string>\"\n      },\n      \"dob\": \"<date>\",\n      \"email\": \"<string>\",\n      \"gender\": \"<string>\"\n    },\n    {\n      \"name\": {\n        \"preferredName\": \"<string>\",\n        \"preferredPronoun\": \"<string>\",\n        \"firstName\": \"<string>\",\n        \"lastName\": \"<string>\"\n      },\n      \"id\": \"<string>\",\n      \"phone\": \"<string>\",\n      \"role\": \"<string>\",\n      \"address\": {\n        \"street1\": \"<string>\",\n        \"street2\": \"<string>\",\n        \"city\": \"<string>\",\n        \"country\": \"<string>\",\n        \"county\": \"<string>\",\n        \"state\": \"<string>\",\n        \"postalCode\": \"<string>\"\n      },\n      \"dob\": \"<date>\",\n      \"email\": \"<string>\",\n      \"gender\": \"<string>\"\n    }\n  ],\n  \"id\": \"<string>\",\n  \"active\": \"<boolean>\",\n  \"children\": [\n    {\n      \"name\": {\n        \"preferredName\": \"<string>\",\n        \"preferredPronoun\": \"<string>\",\n        \"firstName\": \"<string>\",\n        \"lastName\": \"<string>\"\n      },\n      \"id\": \"<string>\",\n      \"dob\": \"<date>\",\n      \"gender\": \"<string>\"\n    },\n    {\n      \"name\": {\n        \"preferredName\": \"<string>\",\n        \"preferredPronoun\": \"<string>\",\n        \"firstName\": \"<string>\",\n        \"lastName\": \"<string>\"\n      },\n      \"id\": \"<string>\",\n      \"dob\": \"<date>\",\n      \"gender\": \"<string>\"\n    }\n  ],\n  \"createdAt\": \"<dateTime>\",\n  \"closureDate\": \"<dateTime>\"\n}"
+						},
+						{
+							"name": "This response code is provided if there is something wrong with the request payload.  Generally this means that a required field was not provided, or that an invalid enumeration was used when constructing the request.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId?fields=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId"
+									],
+									"query": [
+										{
+											"key": "fields",
+											"value": "<string>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "The `Authorization` header was not provided, or the token was unable to be validated.  The affiliate partner requesting the resource cannot be authenticated by the GL platform.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId?fields=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId"
+									],
+									"query": [
+										{
+											"key": "fields",
+											"value": "<string>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "The Access Token provided is valid, but it does not have the correct scope or context to retrieve the resources requested.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId?fields=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId"
+									],
+									"query": [
+										{
+											"key": "fields",
+											"value": "<string>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "The requested resource was not available or not found with the given identifiers.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId?fields=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId"
+									],
+									"query": [
+										{
+											"key": "fields",
+											"value": "<string>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "The request conflicts with the state of the data in GL. The operation is not valid for the selected resource.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId?fields=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId"
+									],
+									"query": [
+										{
+											"key": "fields",
+											"value": "<string>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "GL was unable to process the request.  Client exceeded rate limit for the service.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId?fields=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId"
+									],
+									"query": [
+										{
+											"key": "fields",
+											"value": "<string>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Too Many Requests",
+							"code": 429,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "GL was unable to process the request.  The requested service encountered an unexpected system condition.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId?fields=<string>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId"
+									],
+									"query": [
+										{
+											"key": "fields",
+											"value": "<string>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Family Promotion Subscriptions",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "scope",
+									"value": "io.gl-tech.partners/{{partnerId}}",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://partners.auth.gl-tech.io/oauth2/token",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/families/:familyId/promotion-subscriptions?active=<boolean>",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"families",
+								":familyId",
+								"promotion-subscriptions"
+							],
+							"query": [
+								{
+									"key": "active",
+									"value": "<boolean>",
+									"description": "The active query parameter limits the returned promotion subscriptions to just\nthe current active subscription.  Subscriptions cannot be pre-dated, so an\nactive subscription is a subscription without an end date, or an end date in\nthe future."
+								}
+							],
+							"variable": [
+								{
+									"key": "familyId",
+									"value": "<string>",
+									"description": "(Required) GL external family id"
+								},
+								{
+									"key": "environment",
+									"value": "{{environment}}",
+									"description": "Target environment for requests (This can only be one of stage,prod)"
+								},
+								{
+									"key": "version",
+									"value": "{{version}}",
+									"description": "Target version for requests"
+								}
+							]
+						},
+						"description": "Retrieve any partner promotion subscriptions the client is eligible to see.  Partner clients are allowed to view promotion subscriptions for promotions they offer, but not promotions for other partners.  If an account is subscribed to a promotion, and eligibility status is returned for the promotion.  If an account is not subscribed to a promotion, then the promotion will not be returned in this endpoint."
+					},
+					"response": [
+						{
+							"name": "Family found, client authorized, and promotion subscriptions exist",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId/promotion-subscriptions?active=<boolean>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId",
+										"promotion-subscriptions"
+									],
+									"query": [
+										{
+											"key": "active",
+											"value": "<boolean>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n  {\n    \"eligibility\": {\n      \"status\": \"<string>\",\n      \"statusReason\": \"<string>\"\n    },\n    \"promotion\": {\n      \"id\": \"<string>\",\n      \"name\": \"<string>\"\n    },\n    \"startDate\": \"<date>\",\n    \"endDate\": \"<date>\"\n  },\n  {\n    \"eligibility\": {\n      \"status\": \"<string>\",\n      \"statusReason\": \"<string>\"\n    },\n    \"promotion\": {\n      \"id\": \"<string>\",\n      \"name\": \"<string>\"\n    },\n    \"startDate\": \"<date>\",\n    \"endDate\": \"<date>\"\n  }\n]"
+						},
+						{
+							"name": "The `Authorization` header was not provided, or the token was unable to be validated.  The affiliate partner requesting the resource cannot be authenticated by the GL platform.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId/promotion-subscriptions?active=<boolean>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId",
+										"promotion-subscriptions"
+									],
+									"query": [
+										{
+											"key": "active",
+											"value": "<boolean>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "The Access Token provided is valid, but it does not have the correct scope or context to retrieve the resources requested.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId/promotion-subscriptions?active=<boolean>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId",
+										"promotion-subscriptions"
+									],
+									"query": [
+										{
+											"key": "active",
+											"value": "<boolean>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "The requested resource was not available or not found with the given identifiers.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId/promotion-subscriptions?active=<boolean>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId",
+										"promotion-subscriptions"
+									],
+									"query": [
+										{
+											"key": "active",
+											"value": "<boolean>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "GL was unable to process the request.  Client exceeded rate limit for the service.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId/promotion-subscriptions?active=<boolean>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId",
+										"promotion-subscriptions"
+									],
+									"query": [
+										{
+											"key": "active",
+											"value": "<boolean>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Too Many Requests",
+							"code": 429,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "GL was unable to process the request.  The requested service encountered an unexpected system condition.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId/promotion-subscriptions?active=<boolean>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId",
+										"promotion-subscriptions"
+									],
+									"query": [
+										{
+											"key": "active",
+											"value": "<boolean>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "GL was unable to process the request.  The requested service did not respond.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/families/:familyId/promotion-subscriptions?active=<boolean>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"families",
+										":familyId",
+										"promotion-subscriptions"
+									],
+									"query": [
+										{
+											"key": "active",
+											"value": "<boolean>"
+										}
+									],
+									"variable": [
+										{
+											"key": "familyId",
+											"value": "<string>",
+											"description": "(Required) GL external family id"
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Service Unavailable",
+							"code": 503,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "registrations",
+			"item": [
+				{
+					"name": "{registrationId}",
+					"item": [
+						{
+							"name": "Get Registration Status",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "scope",
+											"value": "io.gl-tech.partners/{{partnerId}}",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "https://partners.auth.gl-tech.io/oauth2/token",
+											"type": "string"
+										},
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/registrations/:registrationId",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"registrations",
+										":registrationId"
+									],
+									"variable": [
+										{
+											"key": "registrationId",
+											"value": "<string>",
+											"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+										},
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								},
+								"description": "Get the status of an active registration workflow with a GL registration id.  GL reserves the rights to prune completed registrations after some duration of time (greater than 30 days).  The purpose of this endpoint is to check the status of active registrations, not catalog or review prior registrations."
+							},
+							"response": [
+								{
+									"name": "The response provided for a valid registration id.  The response includes the current state of the requested registration.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"status\": \"<string>\",\n  \"id\": \"<string>\",\n  \"candidateId\": {\n    \"type\": \"<string>\",\n    \"id\": \"<string>\"\n  },\n  \"familyId\": \"<string>\",\n  \"userId\": \"<string>\"\n}"
+								},
+								{
+									"name": "This response code is provided if there is something wrong with the request payload.  Generally this means that a required field was not provided, or that an invalid enumeration was used when constructing the request.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The `Authorization` header was not provided, or the token was unable to be validated.  The affiliate partner requesting the resource cannot be authenticated by the GL platform.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The Access Token provided is valid, but it does not have the correct scope or context to retrieve the resources requested.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The requested resource was not available or not found with the given identifiers.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "GL was unable to process the request.  Client exceeded rate limit for the service.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Too Many Requests",
+									"code": 429,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/plain"
+										}
+									],
+									"cookie": [],
+									"body": ""
+								},
+								{
+									"name": "GL was unable to process the request.  The requested service encountered an unexpected system condition.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Load Registration Data",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "scope",
+											"value": "io.gl-tech.partners/{{partnerId}}",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "https://partners.auth.gl-tech.io/oauth2/token",
+											"type": "string"
+										},
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"candidate\": {\n    \"candidateId\": {\n        \"type\": \"UID\",\n        \"id\": \"12345\"\n    },\n    \"address\": {\n      \"street1\": \"1234 Some Rd\",\n      \"street2\": \"<string>\",\n      \"city\": \"Dallas\",\n      \"country\": \"Country\",\n      \"county\": \"County\",\n      \"state\": \"TX\",\n      \"postalCode\": \"75050\"\n    },\n    \"dob\": \"06/13/1985\",\n    \"email\": \"arash.didehbani@alkami.com\",\n    \"gender\": \"M\",\n    \"phone\": \"214-111-1234\",\n    \"name\": {\n      \"preferredName\": \"Testing User\",\n      \"firstName\": \"Alkami\",\n      \"lastName\": \"Testing\"\n    },\n    \"last4TaxId\": \"1234\",\n    \"externalCustomerId\": \"12345\"\n  },\n  \"method\": \"PRE_FILL\",\n  \"fundingSource\": {\n    \"externalAccountId\": \"AlkamiAccountIdentifierThatWillBeUsedByGreenlightcallstoalkamifundingaccountendpoint\",\n    \"type\": \"EXTERNAL_REFERENCE\"\n  }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/registrations/{{registration_id}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"registrations",
+										"{{registration_id}}"
+									]
+								},
+								"description": "Load candidate data into an existing registration workflow to pre-fill or pre-submit data already known by the affiliate partner about the candidate.  Information loaded into the registration will be validated by the candidate or by GL in the GL registration workflow."
+							},
+							"response": [
+								{
+									"name": "The data provided was stored against the provided registration.",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"status\": \"<string>\",\n  \"id\": \"<string>\",\n  \"candidateId\": {\n    \"type\": \"<string>\",\n    \"id\": \"<string>\"\n  },\n  \"familyId\": \"<string>\",\n  \"userId\": \"<string>\"\n}"
+								},
+								{
+									"name": "This response code is provided if there is something wrong with the request payload.  Generally this means that a required field was not provided, or that an invalid enumeration was used when constructing the request.",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The `Authorization` header was not provided, or the token was unable to be validated.  The affiliate partner requesting the resource cannot be authenticated by the GL platform.",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The Access Token provided is valid, but it does not have the correct scope or context to retrieve the resources requested.",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The requested resource was not available or not found with the given identifiers.",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "The request conflicts with the state of the data in GL. The operation is not valid for the selected resource.",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Conflict",
+									"code": 409,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								},
+								{
+									"name": "GL was unable to process the request.  Client exceeded rate limit for the service.",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Too Many Requests",
+									"code": 429,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/plain"
+										}
+									],
+									"cookie": [],
+									"body": ""
+								},
+								{
+									"name": "GL was unable to process the request.  The requested service encountered an unexpected system condition.",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "<token>",
+												"description": "Added as a part of security scheme: oauth2"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/registrations/:registrationId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"registrations",
+												":registrationId"
+											],
+											"variable": [
+												{
+													"key": "registrationId",
+													"value": "<string>",
+													"description": "(Required) Greenlight registration id. The registration id is provided in the response from the `initiateRegistration` operation."
+												},
+												{
+													"key": "environment",
+													"value": "{{environment}}",
+													"description": "Target environment for requests (This can only be one of stage,prod)"
+												},
+												{
+													"key": "version",
+													"value": "{{version}}",
+													"description": "Target version for requests"
+												}
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Initiate Registration Workflow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"registration_id\", jsonData.id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "scope",
+									"value": "io.gl-tech.partners/{{partnerId}}",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://partners.auth.gl-tech.io/oauth2/token",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"candidateId\": {\n    \"type\": \"UID\",\n    \"id\": \"12345\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/registrations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"registrations"
+							],
+							"variable": [
+								{
+									"key": "environment",
+									"value": "{{environment}}",
+									"description": "Target environment for requests (This can only be one of stage,prod)"
+								},
+								{
+									"key": "version",
+									"value": "{{version}}",
+									"description": "Target version for requests"
+								}
+							]
+						},
+						"description": "Initiate a GL Registration Workflow for a Candidate.  An AP must provide an identifier for a candidate.  The primary supported identifier is phone number.  GL will determine if the phone number for the candidate is already know to GL to determine the next steps in the registration process.\n\nIf the candidate identifier (phone number) is known to GL, this endpoint should return the family id the phone number is already associated with on the GL platform. During processing, the endpoint should link the family of the candidate to the affiliate partner, if the link does not already exist.  The AP can then associate the candidate with known information, or retrieve family information from GL using the `getFamily` endpoint.\n\nIf the candidate identifier (phone number) is not known to GL, GL assumes a new family is attempting to register with GL.  This endpoint will initiate a new registration workflow and return a unique registration id to identify the workflow.  The AP can then use the `loadRegistration` endpoint to load personal data about the candidate to faciliate faster registration, if information is available.  Once information is loaded, the AP should then utilize the registration id as parameter to post over the candidate to the GL provided deeplink URL, where the candidate will complete registration.  "
+					},
+					"response": [
+						{
+							"name": "The response provided if the candidate is already known to GL and part of an existing family structure, either as the Parent or Second Approver.  When this response is received, the response payload will include a family id that can be used to retrieve th",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/registrations",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"registrations"
+									],
+									"variable": [
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": \"<string>\",\n  \"id\": \"<string>\",\n  \"candidateId\": {\n    \"type\": \"<string>\",\n    \"id\": \"<string>\"\n  },\n  \"familyId\": \"<string>\",\n  \"userId\": \"<string>\"\n}"
+						},
+						{
+							"name": "The response provided if the candidate is not already known and registered on the GL platform.  This response indicates a new registration workflow has been successfully created.  The registration id returned should be used by the affiliate partner to loa",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/registrations",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"registrations"
+									],
+									"variable": [
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": \"<string>\",\n  \"id\": \"<string>\",\n  \"candidateId\": {\n    \"type\": \"<string>\",\n    \"id\": \"<string>\"\n  },\n  \"familyId\": \"<string>\",\n  \"userId\": \"<string>\"\n}"
+						},
+						{
+							"name": "This response code is provided if there is something wrong with the request payload.  Generally this means that a required field was not provided, or that an invalid enumeration was used when constructing the request.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/registrations",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"registrations"
+									],
+									"variable": [
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "The `Authorization` header was not provided, or the token was unable to be validated.  The affiliate partner requesting the resource cannot be authenticated by the GL platform.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/registrations",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"registrations"
+									],
+									"variable": [
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "The Access Token provided is valid, but it does not have the correct scope or context to retrieve the resources requested.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/registrations",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"registrations"
+									],
+									"variable": [
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "GL was unable to process the request.  Client exceeded rate limit for the service.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/registrations",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"registrations"
+									],
+									"variable": [
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Too Many Requests",
+							"code": 429,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "GL was unable to process the request.  The requested service encountered an unexpected system condition.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/registrations",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"registrations"
+									],
+									"variable": [
+										{
+											"key": "environment",
+											"value": "{{environment}}",
+											"description": "Target environment for requests (This can only be one of stage,prod)"
+										},
+										{
+											"key": "version",
+											"value": "{{version}}",
+											"description": "Target version for requests"
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Generate App Client Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"pm.environment.set(\"client_token\", jsonData.access_token);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{client_secret}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{client_id}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "io.gl-tech.partners/{{partnerId}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/oauth2/token",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"oauth2",
+						"token"
+					],
+					"variable": [
+						{
+							"key": "environment",
+							"value": "{{environment}}",
+							"description": "Target environment for requests (This can only be one of stage,prod)"
+						},
+						{
+							"key": "version",
+							"value": "{{version}}",
+							"description": "Target version for requests"
+						}
+					]
+				},
+				"description": "Endpoint to retrieve an access tokens to allow HPP affiliate partners (APs) to access HPP APIs hosted on the GL platform.  This endpoint supports two grant types (`client_credentials` and `partner`).  Partners must chose a valid grant type when requesting a token.\n\n## Client Credentials Grant\nGL supports the OAuth Client Credentials grant flow for HPP partners.  Clients should define the `grant_type` parameter as `client_credentials` to request an access token.  This is the standard OAuth2 client credentials grant type, which will exchange client credentials for a client scoped access token.\n\nWhen requesting the `client_credentials` grant type, the client credentials must be provided in Basic access authentication format `Base64Encode(client_id:client_secret)` in the `Authorization` header.\n\nThe following example is an authorization header for app client `djc98u3jiedmi283eu928` with client secret `abcdef01234567890`, using the Base64-encoded version of the string `djc98u3jiedmi283eu928:abcdef01234567890`.\n\n```\nAuthorization: Basic ZGpjOTh1M2ppZWRtaTI4M2V1OTI4OmFiY2RlZjAxMjM0NTY3ODkw\n```\n\nA client must also pass a valid partner scope definition when requesting a client access token. A partner is only allowed to access families affiliated to that partner, and the scope is the explicit representation of this restriction in the client access token.  A client will not be allowed to request a scope for another AP.  The format for a scope should be `io.gl-tech.partners/{partner_code}`, where the partner code is provided during implementation.\n\n### Client Access Token Request Example\nRequest\n```\ncurl --location --request POST 'https://{GL_ENV}.partners.gl-tech.io/oauth2/token' \\\n--header 'Content-Type: application/x-www-form-urlencoded' \\\n--header 'Authorization: Basic dGVzdHVzZXI6dGVzdHBhc3N3b3JkCg==' \\\n--data-urlencode 'grant_type=client_credentials' \\\n--data-urlencode 'scope=io.gl-tech.partners/{PARTNER_CODE}'\n```\nResponse\n```\n{\n  \"expires_in\": 120,\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTc5MDA1ODgsImV4cCI6MTIzNDU3MTQ5MCwiaXNzIjoiaHR0cHM6Ly9wYXJ0bmVycy5nbC10ZWNoLmlvLyIsInN1YiI6IlBBUlRORVI6OjUwN0M2NDZDLUZEQzctNDNDOC04QkIwLTVGQUNDMjFGMTRGMiIsImF1ZCI6Imh0dHBzOi8vcGFydG5lcnMuZ2wtdGVjaC5pby9hcGkvdjEiLCJzY29wZSI6IlNZU1RFTSJ9.U1ATjq0447AJtFkLN7mIdf3KW4Mhq9lxkgkhxb0SeUU\",\n  \"token_type\": \"Bearer\"\n}\n```\n\n### Client Access Token Usage Example\nThe `AccessTokenResponse` payload defines the Access Token, the Token Type, and the Time-To-Live for the token.  Once a token is received, the token must be placed in the `Authorization` header for subsequent API requests.  The Token Type must preceed the token in the value defined for the `Authorization` header.\n```\ncurl --location --request GET 'https://stage.partners.gl-tech.io/families/1B1C1065-71BA-4B2D-8BCF-ABD483837DB0' \\\n--header 'Content-Type: application/json' \\\n--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTc5MDA1ODgsImV4cCI6MTIzNDU3MTQ5MCwiaXNzIjoiaHR0cHM6Ly9wYXJ0bmVycy5nbC10ZWNoLmlvLyIsInN1YiI6IlBBUlRORVI6OjUwN0M2NDZDLUZEQzctNDNDOC04QkIwLTVGQUNDMjFGMTRGMiIsImF1ZCI6Imh0dHBzOi8vcGFydG5lcnMuZ2wtdGVjaC5pby9hcGkvdjEiLCJzY29wZSI6IlNZU1RFTSJ9.U1ATjq0447AJtFkLN7mIdf3KW4Mhq9lxkgkhxb0SeUU\n```\n\n## Partner Grant\nGL also supports a custom OAuth Partner grant flow for HPP APs.  Clients should define the `grant_type` parameter as `partner` to exchange the provided client access tokenf or a specific user access token.  This is a custom GL grant type that allows a partner to exchange a client access token for a user scoped access token.\n\nWhen requesting the `partner` grant type, a valid client access token must be provided as a bearer token in the `Authorization` header.\n\nA partner is only allowed to request a user access token for users in families that are affiliated with that partner.  The requesting client must provide a user id or an account id to indicate the requested user token. If account id is provided, the user token is generated for the primary user defined for the account.\n\n### User Access Token Request Example\n```\ncurl --location 'https://{GL_ENV}/v1/identity/auth/token' \\\n--header 'Content-Type: application/x-www-form-urlencoded' \\\n--header 'Authorization: Bearer ${CLIENT_APP_TOKEN} \\\n--data-urlencode 'grant_type=partner' \\\n--data-urlencode 'account_id=7af631e0-1cd9-11ee-b728-bf525af6b505'\n```"
+			},
+			"response": [
+				{
+					"name": "Successful Authentication",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "<string>",
+								"description": "Client Credentials in Basic access authentication format or a client bearer token"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/oauth2/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"oauth2",
+								"token"
+							],
+							"variable": [
+								{
+									"key": "environment",
+									"value": "{{environment}}",
+									"description": "Target environment for requests (This can only be one of stage,prod)"
+								},
+								{
+									"key": "version",
+									"value": "{{version}}",
+									"description": "Target version for requests"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{}"
+				}
+			]
+		},
+		{
+			"name": "Generate User Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"pm.environment.set(\"access_token\", jsonData.access_token);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{client_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "partner",
+							"type": "text"
+						},
+						{
+							"key": "account_id",
+							"value": "{{family_id}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/oauth2/token",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"oauth2",
+						"token"
+					],
+					"variable": [
+						{
+							"key": "environment",
+							"value": "{{environment}}",
+							"description": "Target environment for requests (This can only be one of stage,prod)"
+						},
+						{
+							"key": "version",
+							"value": "{{version}}",
+							"description": "Target version for requests"
+						}
+					]
+				},
+				"description": "Endpoint to retrieve an access tokens to allow HPP affiliate partners (APs) to access HPP APIs hosted on the GL platform.  This endpoint supports two grant types (`client_credentials` and `partner`).  Partners must chose a valid grant type when requesting a token.\n\n## Client Credentials Grant\nGL supports the OAuth Client Credentials grant flow for HPP partners.  Clients should define the `grant_type` parameter as `client_credentials` to request an access token.  This is the standard OAuth2 client credentials grant type, which will exchange client credentials for a client scoped access token.\n\nWhen requesting the `client_credentials` grant type, the client credentials must be provided in Basic access authentication format `Base64Encode(client_id:client_secret)` in the `Authorization` header.\n\nThe following example is an authorization header for app client `djc98u3jiedmi283eu928` with client secret `abcdef01234567890`, using the Base64-encoded version of the string `djc98u3jiedmi283eu928:abcdef01234567890`.\n\n```\nAuthorization: Basic ZGpjOTh1M2ppZWRtaTI4M2V1OTI4OmFiY2RlZjAxMjM0NTY3ODkw\n```\n\nA client must also pass a valid partner scope definition when requesting a client access token. A partner is only allowed to access families affiliated to that partner, and the scope is the explicit representation of this restriction in the client access token.  A client will not be allowed to request a scope for another AP.  The format for a scope should be `io.gl-tech.partners/{partner_code}`, where the partner code is provided during implementation.\n\n### Client Access Token Request Example\nRequest\n```\ncurl --location --request POST 'https://{GL_ENV}.partners.gl-tech.io/oauth2/token' \\\n--header 'Content-Type: application/x-www-form-urlencoded' \\\n--header 'Authorization: Basic dGVzdHVzZXI6dGVzdHBhc3N3b3JkCg==' \\\n--data-urlencode 'grant_type=client_credentials' \\\n--data-urlencode 'scope=io.gl-tech.partners/{PARTNER_CODE}'\n```\nResponse\n```\n{\n  \"expires_in\": 120,\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTc5MDA1ODgsImV4cCI6MTIzNDU3MTQ5MCwiaXNzIjoiaHR0cHM6Ly9wYXJ0bmVycy5nbC10ZWNoLmlvLyIsInN1YiI6IlBBUlRORVI6OjUwN0M2NDZDLUZEQzctNDNDOC04QkIwLTVGQUNDMjFGMTRGMiIsImF1ZCI6Imh0dHBzOi8vcGFydG5lcnMuZ2wtdGVjaC5pby9hcGkvdjEiLCJzY29wZSI6IlNZU1RFTSJ9.U1ATjq0447AJtFkLN7mIdf3KW4Mhq9lxkgkhxb0SeUU\",\n  \"token_type\": \"Bearer\"\n}\n```\n\n### Client Access Token Usage Example\nThe `AccessTokenResponse` payload defines the Access Token, the Token Type, and the Time-To-Live for the token.  Once a token is received, the token must be placed in the `Authorization` header for subsequent API requests.  The Token Type must preceed the token in the value defined for the `Authorization` header.\n```\ncurl --location --request GET 'https://stage.partners.gl-tech.io/families/1B1C1065-71BA-4B2D-8BCF-ABD483837DB0' \\\n--header 'Content-Type: application/json' \\\n--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTc5MDA1ODgsImV4cCI6MTIzNDU3MTQ5MCwiaXNzIjoiaHR0cHM6Ly9wYXJ0bmVycy5nbC10ZWNoLmlvLyIsInN1YiI6IlBBUlRORVI6OjUwN0M2NDZDLUZEQzctNDNDOC04QkIwLTVGQUNDMjFGMTRGMiIsImF1ZCI6Imh0dHBzOi8vcGFydG5lcnMuZ2wtdGVjaC5pby9hcGkvdjEiLCJzY29wZSI6IlNZU1RFTSJ9.U1ATjq0447AJtFkLN7mIdf3KW4Mhq9lxkgkhxb0SeUU\n```\n\n## Partner Grant\nGL also supports a custom OAuth Partner grant flow for HPP APs.  Clients should define the `grant_type` parameter as `partner` to exchange the provided client access tokenf or a specific user access token.  This is a custom GL grant type that allows a partner to exchange a client access token for a user scoped access token.\n\nWhen requesting the `partner` grant type, a valid client access token must be provided as a bearer token in the `Authorization` header.\n\nA partner is only allowed to request a user access token for users in families that are affiliated with that partner.  The requesting client must provide a user id or an account id to indicate the requested user token. If account id is provided, the user token is generated for the primary user defined for the account.\n\n### User Access Token Request Example\n```\ncurl --location 'https://{GL_ENV}/v1/identity/auth/token' \\\n--header 'Content-Type: application/x-www-form-urlencoded' \\\n--header 'Authorization: Bearer ${CLIENT_APP_TOKEN} \\\n--data-urlencode 'grant_type=partner' \\\n--data-urlencode 'account_id=7af631e0-1cd9-11ee-b728-bf525af6b505'\n```"
+			},
+			"response": [
+				{
+					"name": "Successful Authentication",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "<string>",
+								"description": "Client Credentials in Basic access authentication format or a client bearer token"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/oauth2/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"oauth2",
+								"token"
+							],
+							"variable": [
+								{
+									"key": "environment",
+									"value": "{{environment}}",
+									"description": "Target environment for requests (This can only be one of stage,prod)"
+								},
+								{
+									"key": "version",
+									"value": "{{version}}",
+									"description": "Target version for requests"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{}"
+				}
+			]
+		},
+		{
+			"name": "Test Connectivity",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{ping-Url}}/ping",
+					"host": [
+						"{{ping-Url}}"
+					],
+					"path": [
+						"ping"
+					],
+					"variable": [
+						{
+							"key": "environment",
+							"value": "{{environment}}",
+							"description": "Target environment for requests (This can only be one of stage,prod)"
+						},
+						{
+							"key": "version",
+							"value": "{{version}}",
+							"description": "Target version for requests"
+						}
+					]
+				},
+				"description": "Pings the backend infrastructure supporting the HPP API to validate connectivity."
+			},
+			"response": [
+				{
+					"name": "Successful Connectivity Test",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{ping-Url}}/ping",
+							"host": [
+								"{{ping-Url}}"
+							],
+							"path": [
+								"ping"
+							],
+							"variable": [
+								{
+									"key": "environment",
+									"value": "{{environment}}",
+									"description": "Target environment for requests (This can only be one of stage,prod)"
+								},
+								{
+									"key": "version",
+									"value": "{{version}}",
+									"description": "Target version for requests"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{}"
+				},
+				{
+					"name": "GL was unable to process the request.  Client exceeded rate limit for the service.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{ping-Url}}/ping",
+							"host": [
+								"{{ping-Url}}"
+							],
+							"path": [
+								"ping"
+							],
+							"variable": [
+								{
+									"key": "environment",
+									"value": "{{environment}}",
+									"description": "Target environment for requests (This can only be one of stage,prod)"
+								},
+								{
+									"key": "version",
+									"value": "{{version}}",
+									"description": "Target version for requests"
+								}
+							]
+						}
+					},
+					"status": "Too Many Requests",
+					"code": 429,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "GL was unable to process the request.  The requested service encountered an unexpected system condition.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{ping-Url}}/ping",
+							"host": [
+								"{{ping-Url}}"
+							],
+							"path": [
+								"ping"
+							],
+							"variable": [
+								{
+									"key": "environment",
+									"value": "{{environment}}",
+									"description": "Target environment for requests (This can only be one of stage,prod)"
+								},
+								{
+									"key": "version",
+									"value": "{{version}}",
+									"description": "Target version for requests"
+								}
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}"
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "environment",
+			"value": "stage",
+			"type": "any"
+		},
+		{
+			"key": "version",
+			"value": "v1",
+			"type": "any"
+		},
+		{
+			"key": "baseUrl",
+			"value": "https://{{environment}}.partners.gl-tech.io/hpp/api/{{version}}",
+			"type": "string"
+		},
+		{
+			"key": "environment",
+			"value": "stage",
+			"type": "any"
+		},
+		{
+			"key": "ping-Url",
+			"value": "https://{{environment}}.partners.gl-tech.io",
+			"type": "string"
+		}
+	]
+}
