@@ -1,0 +1,23 @@
+###
+# This file adds the Compose Compiler Gradle plugin,
+# and allows to use Compose that matches the version of Kotlin we have installed.
+# See:
+# - https://developer.android.com/develop/ui/compose/setup#setup-compose
+# - https://developer.android.com/develop/ui/compose/compiler
+###
+
+[versions]
+kotlin = "2.0.0"
+uiGraphicsAndroid = "1.6.8"
+
+[libraries]
+androidx-ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
+
+[plugins]
+org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+
+# Add the Compose Compiler Gradle plugin to app-foundation/android/gradle/libs.versions.toml.
+# Define alias to the plugin section in app-foundation/android/app/build.gradle.
+# Each module (such as plugin_alkami_greenlight) now can add dependencies to Compose
+# that dynamically resolves the version from the kotlin version.
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

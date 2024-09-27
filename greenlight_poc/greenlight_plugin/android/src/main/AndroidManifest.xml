@@ -1,0 +1,19 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="com.example.greenlight_plugin">
+
+  <!--
+    Use custom styled theme to adjust background color, make sure no title bar is shown, etc.
+  -->
+  <application android:theme="@style/AlkamiGreenlightTheme">
+    <!--
+      Define custom activity that gives us a chance to plug into the lifecycle of it
+      and send method channel messages to Flutter so that we can more control
+      like suspend or resume the application session, etc.
+    -->
+    <activity
+      android:name=".GreenlightActivity"
+      android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+      android:exported="false" />
+  </application>
+
+</manifest>

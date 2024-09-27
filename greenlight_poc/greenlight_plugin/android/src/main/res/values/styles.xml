@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        A custom theme to adjust background color, make sure no title bar is shown, etc.
+        For parity it uses same parent theme what we use throughout
+        the Flutter app (set in app-foundation): `@android:style/Theme.Black.NoTitleBar`
+    -->
+    <style name="AlkamiGreenlightTheme" parent="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+        <!--
+            Yet, it overrides the background to match Iris platformWhite color
+            which is our scaffold background color in Flutter.
+            This prevents from seeing black background when the Greenlight UI
+            slides over the Flutter screen.
+        -->
+        <item name="android:background">@android:color/white</item>
+    </style>
+
+</resources>
